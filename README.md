@@ -38,8 +38,8 @@ Update node 4's parent to node 2:
 Run the test with `sbt test`. The database used for testing is defined in `test.conf` and gets reset before every test run. The user specified in `test.conf` needs to be owner of the public schema.
 
 ## Run
-You can run the microservice with `sbt run`.
+You can run the microservice with `sbt run`. This requires a local postgres installation with the login role and database specified in `application.conf`.
 
 ## Docker
-To run the service in a container network with database compile the app with `sbt compile` and run `sbt:publishLocal` followed by `docker-compose up`
+To run the service in a container network with database compile the app with `sbt compile` and run `sbt docker:publishLocal` followed by `docker-compose up`
 
