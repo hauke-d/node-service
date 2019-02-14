@@ -1,0 +1,17 @@
+version: '3'
+services:
+  web:
+    build: ./target/docker/stage
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_HOST=db
+      - DATABASE_NAME=nodes
+    depends_on:
+      - "db"
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=nodes
+      - POSTGRES_USER=tradeshift
+      - POSTGRES_PASSWORD=tradeshift
