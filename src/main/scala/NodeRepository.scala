@@ -17,6 +17,8 @@ object NodeError {
 object NodeRepository {
   case class NodeProperties(name: String, parentId: Long)
 
+  case class UpdateNodeProperties(name: Option[String], parentId: Option[Long])
+
   case class Node(id: Long, name: String, parentId: Option[Long], rootId: Long, height: Int)
 }
 
@@ -129,10 +131,10 @@ class NodeRepository(transactor: Transactor[IO]) {
     } yield node
   }
 
-  def updateNode(id: Long, node: NodeProperties): IO[Node] = {
+  def updateNode(id: Long, node: UpdateNodeProperties): IO[Node] = {
     // Run updates in one transaction
-    def updateNodeAndHeights: ConnectionIO[Node] = for {
-        updatedNode <- updateNodeSql(id, node)
+    def updateNodeAndHeights(n: NodeProperties): ConnectionIO[Node] = for {
+        updatedNode <- updateNodeSql(id, n)
         _ <- updateDescendantHeightsSql(updatedNode.id)
       } yield updatedNode
 
@@ -145,9 +147,10 @@ class NodeRepository(transactor: Transactor[IO]) {
 
     for {
       n <- findNode(id)
-      p <- findNode(node.parentId)
+      props = NodeProperties(node.name.getOrElse(n.name), node.parentId.orElse(n.parentId).getOrElse(n.id))
+      p <- findNode(props.parentId)
       _ <- ensureNotDescendant(n, p)
-      node <- updateNodeAndHeights.transact(transactor)
+      node <- updateNodeAndHeights(props).transact(transactor)
     } yield node
   }
 }

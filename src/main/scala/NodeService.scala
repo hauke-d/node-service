@@ -1,6 +1,6 @@
 
 import NodeError.{NodeError, NodeNotFound}
-import NodeRepository.NodeProperties
+import NodeRepository.{NodeProperties, UpdateNodeProperties}
 import cats.effect.IO
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -36,7 +36,7 @@ class NodeService(nodeRepository: NodeRepository) extends Http4sDsl[IO] {
 
     case req @ PATCH -> Root / "nodes" / LongVar(id) =>
       (for {
-        props <- req.decodeJson[NodeProperties]
+        props <- req.decodeJson[UpdateNodeProperties]
         node <- nodeRepository.updateNode(id, props)
       } yield node) flatMap {
         node => Ok(node.asJson)

@@ -1,6 +1,6 @@
 import Config.DatabaseConfig
 import NodeError.{NewParentIsDescendant, NodeNotFound}
-import NodeRepository.{Node, NodeProperties}
+import NodeRepository.{Node, NodeProperties, UpdateNodeProperties}
 import cats.data.Kleisli
 import cats.effect.{ContextShift, IO}
 import doobie.hikari.HikariTransactor
@@ -196,28 +196,28 @@ class NodeServiceTest extends FunSuite with Matchers with BeforeAndAfterEach {
 
       // Updating a non-existent node should fail
       check(
-        service.run(Request(method = Method.PATCH, uri = Uri.uri("/nodes/999"), body = body(NodeProperties("a", 4).asJson))),
+        service.run(Request(method = Method.PATCH, uri = Uri.uri("/nodes/999"), body = body(UpdateNodeProperties(Some("a"), Some(4)).asJson))),
         Status.NotFound,
         Some(ErrorResponse(NodeNotFound(999).msg).asJson)
       )
 
       // Updating the parent to one of the descendants should fail
       check(
-        service.run(Request(method = Method.PATCH, uri = Uri.uri("/nodes/2"), body = body(NodeProperties("a", 7).asJson))),
+        service.run(Request(method = Method.PATCH, uri = Uri.uri("/nodes/2"), body = body(UpdateNodeProperties(Some("a"), Some(7)).asJson))),
         Status.BadRequest,
         Some(ErrorResponse(NewParentIsDescendant.msg).asJson)
       )
 
       // Updating the parent to the node itself should fail
       check(
-        service.run(Request(method = Method.PATCH, uri = Uri.uri("/nodes/2"), body = body(NodeProperties("a", 2).asJson))),
+        service.run(Request(method = Method.PATCH, uri = Uri.uri("/nodes/2"), body = body(UpdateNodeProperties(Some("a"), Some(2)).asJson))),
         Status.BadRequest,
         Some(ErrorResponse(NewParentIsDescendant.msg).asJson)
       )
 
       // Updating the parent should otherwise succeed
       check(
-        service.run(Request(method = Method.PATCH, uri = Uri.uri("/nodes/2"), body = body(NodeProperties("a", 6).asJson))),
+        service.run(Request(method = Method.PATCH, uri = Uri.uri("/nodes/2"), body = body(UpdateNodeProperties(Some("a"), Some(6)).asJson))),
         Status.Ok,
         Some(Node(2, "a", Some(6), 1, 3).asJson)
       )
