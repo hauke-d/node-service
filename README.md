@@ -47,6 +47,8 @@ To avoid installing sbt and to skip compilation and environment setup take the s
 
 `$ docker-compose up` 
 
+The service is running at `http://localhost:8080`, enjoy :)
+
 ## Build
 Requires [sbt](https://www.scala-sbt.org/download.html). Once installed, run sbt compile in the project's directory.
 
