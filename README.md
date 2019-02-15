@@ -37,9 +37,9 @@ Update node 4's parent to node 2:
 ## Docker
 To avoid installing sbt and to skip compilation and environment setup take the shortcut using pre-compiled sources and docker-compose:
 
-`$ git clone git@github.com:hauke-d/tree-service.git` 
+`$ git clone git@github.com:hauke-d/node-service.git` 
 
-`$ cd tree-service`
+`$ cd node-service`
  
 `$ wget https://s3.eu-central-1.amazonaws.com/dk.hauke/nodeservice/target.tar.gz` 
 
