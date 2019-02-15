@@ -34,12 +34,26 @@ Update node 4's parent to node 2:
 
 ```curl -X PATCH --header "Content-Type: application/json" --data '{ "parentId": 4 }' http://localhost:8080/nodes/2```
 
+## Docker
+To avoid installing sbt and to skip compilation and environment setup take the shortcut using pre-compiled sources and docker-compose:
+
+`$ git clone git@github.com:hauke-d/tree-service.git` 
+
+`$ cd tree-service`
+ 
+`$ wget https://s3.eu-central-1.amazonaws.com/dk.hauke/nodeservice/target.tar.gz` 
+
+`$ tar -xzf target.tar.gz` 
+
+`$ docker-compose up` 
+
+## Build
+Requires [sbt](https://www.scala-sbt.org/download.html). Once installed, run sbt compile in the project's directory.
+
 ## Test
 Run the test with `sbt test`. The database used for testing is defined in `test.conf` and gets reset before every test run. The user specified in `test.conf` needs to be owner of the public schema.
 
 ## Run
 You can run the microservice with `sbt run`. This requires a local postgres installation with the login role and database specified in `application.conf`.
 
-## Docker
-To run the service in a container network with database compile the app with `sbt compile` and run `sbt docker:publishLocal` followed by `docker-compose up`
 

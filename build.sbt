@@ -19,7 +19,6 @@ lazy val root = (project in file("."))
     name := "node service",
     version := "1.0-SNAPSHOT",
     scalaVersion := "2.12.4",
-    //dockerBaseImage := "openjdk:8-jre-alpine",
     dockerExposedPorts += 8080,
     resolvers ++= Seq(
       "bintray-sbt-plugin-releases" at "http://dl.bintray.com/content/sbt/sbt-plugin-releases",

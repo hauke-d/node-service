@@ -26,19 +26,21 @@ class NodeRepository(transactor: Transactor[IO]) {
   import NodeRepository._
   import NodeError._
 
-  def getRootNodeSql(): ConnectionIO[Node] = {
+  /** Atomic SQL statements **/
+
+  private def getRootNodeSql: ConnectionIO[Node] = {
     sql"select id, name, parent_id, root_id, height from node where parent_id is null"
       .query[Node]
       .unique
   }
 
-  def getNodeSql(id: Long): ConnectionIO[Option[Node]] = {
+  private def getNodeSql(id: Long): ConnectionIO[Option[Node]] = {
     sql"select id, name, parent_id, root_id, height from node where id = $id"
       .query[Node]
       .option
   }
 
-  def getChildrenSql(id: Long): ConnectionIO[List[Node]] = {
+  private def getChildrenSql(id: Long): ConnectionIO[List[Node]] = {
     sql"""
       select id, name, parent_id, root_id, height from node where parent_id = $id
       """
@@ -46,7 +48,7 @@ class NodeRepository(transactor: Transactor[IO]) {
       .to[List]
   }
 
-  def insertNodeSql(node: NodeProperties): ConnectionIO[Node] = {
+  private def insertNodeSql(node: NodeProperties): ConnectionIO[Node] = {
     sql"""
       insert into node (name, parent_id, root_id, height)
       values (
@@ -60,7 +62,7 @@ class NodeRepository(transactor: Transactor[IO]) {
       .withUniqueGeneratedKeys[Node]("id", "name", "parent_id", "root_id", "height")
   }
 
-  def updateNodeSql(id: Long, node: NodeProperties): ConnectionIO[Node] = {
+  private def updateNodeSql(id: Long, node: NodeProperties): ConnectionIO[Node] = {
     sql"""
       update node
       set
@@ -73,7 +75,13 @@ class NodeRepository(transactor: Transactor[IO]) {
       .withUniqueGeneratedKeys[Node]("id", "name", "parent_id", "root_id", "height")
   }
 
-  def updateDescendantHeightsSql(id: Long): ConnectionIO[Int] = {
+  /**
+    * SQL Recursion to set the height of all descendants based on
+    * the current height of the node with the given id
+    * @param id
+    * @return
+    */
+  private def updateDescendantHeightsSql(id: Long): ConnectionIO[Int] = {
     sql"""
       with recursive children as (
         select id, height from node where id = 1
@@ -90,7 +98,14 @@ class NodeRepository(transactor: Transactor[IO]) {
       .run
   }
 
-  def isDescendant(node: Node, possibleDescendant: Node): IO[Boolean] = {
+  /**
+    * SQL Recursion to check if a node is a descendant of another node.
+    * According to this query, a node is also a descendant of itself.
+    * @param node   the node further up the tree
+    * @param possibleDescendant the node we expect further down the tree
+    * @return
+    */
+  private def isDescendant(node: Node, possibleDescendant: Node): IO[Boolean] = {
     sql"""
        with recursive parents as (
         select id, parent_id from node where id = ${possibleDescendant.id}
@@ -106,15 +121,18 @@ class NodeRepository(transactor: Transactor[IO]) {
       .transact(transactor)
   }
 
+  /** Composed operations **/
+
   def findNode(id: Long): IO[Node] = {
     getNodeSql(id).transact(transactor) flatMap {
+      // raise an error if node not found
       case None => IO.raiseError(NodeNotFound(id))
       case Some(n) => IO.pure(n)
     }
   }
 
   def findRootNode(): IO[Node] = {
-    getRootNodeSql().transact(transactor)
+    getRootNodeSql.transact(transactor)
   }
 
   def findChildren(parentId: Long): IO[List[Node]] = {
@@ -147,6 +165,7 @@ class NodeRepository(transactor: Transactor[IO]) {
 
     for {
       n <- findNode(id)
+      // For partial updates: use only the given properties and default to the current value
       props = NodeProperties(node.name.getOrElse(n.name), node.parentId.orElse(n.parentId).getOrElse(n.id))
       p <- findNode(props.parentId)
       _ <- ensureNotDescendant(n, p)
